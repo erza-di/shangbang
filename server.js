@@ -19,6 +19,7 @@ const http = require('http');
 const fs = require('fs');
 const path = require('path');
 const payments = require('./payments');
+const upstash = require('./upstash');
 
 const PORT = parseInt(process.env.PORT || '8787', 10);
 const HOST = process.env.HOST || '0.0.0.0';
@@ -108,26 +109,18 @@ function seedEntries() {
 
 /* ---------------- 持久化 ---------------- */
 let db;
-function loadDb() {
-  try {
-    db = JSON.parse(fs.readFileSync(DB_FILE, 'utf8'));
-    if (!Array.isArray(db.entries)) throw new Error('bad db');
-  } catch (e) {
-    db = {
-      entries: seedEntries(),
-      events: [
-        { t: Date.now(), msg: '泡泡玛特 LABUBU 以 ¥52,800 登顶总榜' },
-        { t: Date.now() - 6e5, msg: '瑞幸咖啡 加价 ¥800 反超蜜雪冰城' },
-        { t: Date.now() - 12e5, msg: '12306 出现神秘出价，全网震惊' },
-      ],
-      raisesToday: 137,
-      dayKey: new Date().toISOString().slice(0, 10),
-      seq: 1000,
-      orders: [],
-    };
-    saveDb();
-  }
-}
+const freshSeedDb = () => ({
+  entries: seedEntries(),
+  events: [
+    { t: Date.now(), msg: '泡泡玛特 LABUBU 以 ¥52,800 登顶总榜' },
+    { t: Date.now() - 6e5, msg: '瑞幸咖啡 加价 ¥800 反超蜜雪冰城' },
+    { t: Date.now() - 12e5, msg: '12306 出现神秘出价，全网震惊' },
+  ],
+  raisesToday: 137,
+  dayKey: new Date().toISOString().slice(0, 10),
+  seq: 1000,
+  orders: [],
+});
 let saveTimer = null;
 function saveDb() {
   if (saveTimer) return;
@@ -139,7 +132,26 @@ function saveDb() {
       fs.writeFileSync(tmp, JSON.stringify(db));
       fs.renameSync(tmp, DB_FILE);
     } catch (e) { console.error('[save]', e.message); }
+    upstash.scheduleSave(() => db);   // 有 Upstash 时同步备份到 Redis
   }, 120);
+}
+
+async function initDb() {
+  // 1) 本地文件优先（本机运行场景）
+  try {
+    const local = JSON.parse(fs.readFileSync(DB_FILE, 'utf8'));
+    if (Array.isArray(local.entries)) {
+      db = local;
+      console.log('[db] loaded from local file');
+      return;
+    }
+  } catch (_) { /* 无本地文件，继续 */ }
+  // 2) Upstash Redis 恢复（Actions 实例轮换后接续数据）
+  const remote = await upstash.loadRemote();
+  if (remote) { db = remote; return; }
+  // 3) 都没有 → 种子
+  db = freshSeedDb();
+  saveDb();
 }
 
 /* ---------------- 工具 ---------------- */
@@ -371,16 +383,19 @@ const server = http.createServer(async (req, res) => {
   }
 });
 
-loadDb();
-payments.bindPersistence(
-  () => db.orders || [],
-  () => {}
-);
 payments.onPaidApply(payload => {
   const r = placeBid(payload);
   if (!r.err) saveDb();
   return r;
 });
-server.listen(PORT, HOST, () => {
-  console.log(`[上榜公报] listening on http://${HOST}:${PORT}  data=${DB_FILE}`);
-});
+
+(async () => {
+  await initDb();
+  payments.bindPersistence(
+    () => db.orders || [],
+    () => {}
+  );
+  server.listen(PORT, HOST, () => {
+    console.log(`[上榜公报] listening on http://${HOST}:${PORT}  data=${DB_FILE}  redis=${upstash.enabled ? 'on' : 'off'}`);
+  });
+})();

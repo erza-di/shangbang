@@ -31,7 +31,10 @@ jobs:
 
       - name: Start server + tunnel
         run: |
-          ADMIN_TOKEN="${{ secrets.ADMIN_TOKEN }}" node server.js > server.log 2>&1 &
+          ADMIN_TOKEN="${{ secrets.ADMIN_TOKEN }}" \
+          UPSTASH_URL="${{ secrets.UPSTASH_URL }}" \
+          UPSTASH_TOKEN="${{ secrets.UPSTASH_TOKEN }}" \
+          node server.js > server.log 2>&1 &
           ./ngrok http 8787 --url=mayflower-vanquish-botch.ngrok-free.dev --log stdout > ngrok.log 2>&1 &
           sleep 20
           echo "--- local health:"; curl -s http://127.0.0.1:8787/healthz || cat server.log
