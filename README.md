@@ -18,8 +18,8 @@
 - 每 4 小时自动续期一轮（`schedule` + `workflow_dispatch` 可手动触发）
 - 单轮跑约 3 小时 40 分，`concurrency` 组确保新实例顶替旧实例时域名无缝切换
 - ngrok authtoken / ADMIN_TOKEN 存于仓库 Secrets，不在代码里
-- 注意：Actions 实例的 `data/` 是临时的——实例切换后用户出价会回到种子数据；
-  要持久化请接 Supabase/Redis 或把 db.json 定期 commit 回仓库
+- 注意：实例轮换时数据已通过 Upstash Redis 跨实例持久（`UPSTASH_URL`/`UPSTASH_TOKEN` Secrets），
+  出价、快讯、订单在轮换后自动恢复；未配置时自动降级为实例内临时存储
 
 ## 当前形态
 
