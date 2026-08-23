@@ -5,7 +5,7 @@ const fs = require('fs');
 const path = require('path');
 
 const DB = process.env.DB_FILE || path.join(__dirname, '..', 'data', 'db.json');
-const OUT = path.join(__dirname, '..', 'public', 'blog.html');
+const OUT = path.join(__dirname, '..', 'docs', 'blog.html');
 const BASE = 'https://erza-di.github.io/shangbang/';
 
 function esc(s){ return String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }

@@ -40,5 +40,16 @@ jobs:
           echo "--- local health:"; curl -s http://127.0.0.1:8787/healthz || cat server.log
           echo "--- public health:"; curl -s https://mayflower-vanquish-botch.ngrok-free.dev/healthz -H "ngrok-skip-browser-warning: 1" | tail -c 300 || (echo "(public not ready yet)"; tail -20 ngrok.log)
 
+      - name: Refresh daily battle-report page (commit back)
+        run: |
+          node scripts/blog-gen.js || true
+          git config user.name "bot"
+          git config user.email "bot@users.noreply.github.com"
+          if [[ -n "$(git status --porcelain docs/blog.html)" ]]; then
+            git add docs/blog.html
+            git commit -m "chore: refresh blog.html [skip ci]"
+            git push
+          fi
+
       - name: Keep alive
         run: sleep 13200   # 约 3小时40分 后退出，等下一次调度接管
