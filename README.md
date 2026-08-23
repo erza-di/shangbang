@@ -7,9 +7,19 @@
 | 入口 | 地址 | 说明 |
 |---|---|---|
 | **GitHub Pages**（主推） | https://erza-di.github.io/shangbang/ | 静态页永久在线；API 自动走 ngrok 域名 |
-| **ngrok 直连** | https://mayflower-vanquish-botch.ngrok-free.dev | 页面+API 同源，本机在线即可用 |
+| **ngrok 直连** | https://mayflower-vanquish-botch.ngrok-free.dev | 页面+API 同源，由 GitHub Actions 7×24 常驻 |
 
 仓库：https://github.com/erza-di/shangbang
+
+### 7×24 常驻机制（GitHub Actions）
+
+`.github/workflows/keep-online.yml`：
+
+- 每 4 小时自动续期一轮（`schedule` + `workflow_dispatch` 可手动触发）
+- 单轮跑约 3 小时 40 分，`concurrency` 组确保新实例顶替旧实例时域名无缝切换
+- ngrok authtoken / ADMIN_TOKEN 存于仓库 Secrets，不在代码里
+- 注意：Actions 实例的 `data/` 是临时的——实例切换后用户出价会回到种子数据；
+  要持久化请接 Supabase/Redis 或把 db.json 定期 commit 回仓库
 
 ## 当前形态
 
