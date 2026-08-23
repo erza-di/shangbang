@@ -1,0 +1,645 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>上榜公报 · 价高者得 —— 全站实时竞价排行</title>
+<meta name="description" content="排名即出价，别无其他。中国市场的实时竞价排行榜。">
+<style>
+/* ================= tokens · 公报风：米白纸 + 墨 + 朱红 ================= */
+:root{
+  --paper:#f6f2ea; --paper2:#efe9dd; --card:#fbf8f2; --field:#f2ede3;
+  --line:#ddd5c5; --line2:#c8bfab;
+  --ink:#1c1813; --mut:#6e675a; --dim:#a39a89;
+  --red:#c23a1e; --red-deep:#9e2c14; --gold:#a07c2c; --gold-soft:#f3ead0;
+  --up:#1e7a4f; --down:#c23a1e;
+  --serif:"Noto Serif SC","Source Han Serif SC","Songti SC","STSong",NSimSun,SimSun,serif;
+  --sans:"PingFang SC","HarmonyOS Sans SC","Microsoft YaHei",system-ui,sans-serif;
+  --mono:ui-monospace,"Cascadia Mono",Consolas,"Courier New",monospace;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scrollbar-color:var(--line2) var(--paper)}
+body{background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.65;-webkit-font-smoothing:antialiased}
+/* 纸纹：极淡的横向纤维 */
+body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;opacity:.5;
+  background-image:repeating-linear-gradient(0deg,rgba(120,100,70,.022) 0 1px,transparent 1px 3px)}
+::selection{background:var(--red);color:#fff}
+a{color:inherit;text-decoration:none}
+button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
+:focus-visible{outline:2px solid var(--red);outline-offset:2px;border-radius:2px}
+
+/* ================= nav ================= */
+.nav{position:sticky;top:0;z-index:50;background:var(--paper);border-bottom:1px solid var(--ink)}
+.nav-inner{max-width:1060px;margin:0 auto;display:flex;align-items:center;gap:26px;
+  height:64px;padding:0 clamp(16px,4vw,32px)}
+.logo{display:flex;align-items:baseline;gap:8px;font-family:var(--serif);font-size:23px;font-weight:900;letter-spacing:.06em}
+.logo .seal-mini{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;
+  background:var(--red);color:#fff;font-family:var(--serif);font-size:14px;font-weight:700;border-radius:3px;
+  transform:translateY(4px) rotate(-4deg);box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.55)}
+.logo .tld{font-family:var(--mono);font-size:11px;color:var(--dim);letter-spacing:.05em}
+.nav-links{display:flex;align-items:center;gap:2px;margin-right:auto}
+.nav-link{padding:8px 12px;font-size:14px;color:var(--mut);display:flex;align-items:center;gap:6px;
+  border-bottom:2px solid transparent;transition:color .15s,border-color .15s}
+.nav-link:hover{color:var(--ink)}
+.nav-link.active{color:var(--red);border-bottom-color:var(--red);font-weight:600}
+.drop{position:relative}
+.drop .caret{transition:transform .18s}
+.drop.open .caret{transform:rotate(180deg)}
+.drop.open>.nav-link{color:var(--ink)}
+.mega{position:absolute;top:calc(100% + 14px);left:50%;transform:translateX(-50%) translateY(-4px);
+  width:min(660px,94vw);background:var(--card);border:1px solid var(--ink);border-radius:6px;
+  box-shadow:6px 6px 0 rgba(28,24,19,.14);padding:20px 22px 14px;
+  display:none;opacity:0;transition:opacity .15s,transform .15s}
+.drop.open .mega{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;opacity:1;transform:translateX(-50%) translateY(0)}
+.mega-group h5{font-family:var(--serif);font-size:12px;font-weight:900;color:var(--red);letter-spacing:.2em;
+  margin-bottom:8px;padding-bottom:5px;border-bottom:1px solid var(--line2)}
+.mega-item{display:flex;justify-content:space-between;align-items:center;width:100%;
+  padding:5px 7px;border-radius:3px;font-size:13.5px;color:var(--mut);text-align:left;transition:background .12s,color .12s}
+.mega-item:hover{background:var(--paper2);color:var(--ink)}
+.mega-item.active{color:var(--red);font-weight:600}
+.mega-item .n{font-family:var(--mono);font-size:11px;color:var(--dim)}
+.mega-foot{grid-column:1/-1;border-top:1px dashed var(--line2);margin-top:4px;padding-top:9px;
+  font-family:var(--mono);font-size:11px;color:var(--dim);text-align:center}
+.btn-primary{display:inline-flex;align-items:center;gap:7px;background:var(--ink);color:var(--paper);
+  font-weight:700;font-size:14px;padding:9px 18px;border-radius:3px;transition:background .15s,transform .1s}
+.btn-primary:hover{background:var(--red)}
+.btn-primary:active{transform:scale(.97)}
+
+/* ================= 电讯条 ================= */
+.ticker{height:36px;border-bottom:1px solid var(--line2);overflow:hidden;display:flex;align-items:center;background:var(--paper2)}
+.ticker-label{flex:none;display:flex;align-items:center;gap:7px;height:100%;padding:0 14px;
+  font-family:var(--serif);font-size:12px;font-weight:900;color:var(--paper);background:var(--red);letter-spacing:.22em}
+.live-dot{width:6px;height:6px;border-radius:50%;background:#fff;animation:pulse 1.6s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.25}}
+.ticker-view{overflow:hidden;flex:1}
+.ticker-track{display:inline-block;white-space:nowrap;font-family:var(--mono);font-size:12px;color:var(--mut);
+  padding-left:100%;animation:tick 46s linear infinite;animation-delay:-14s}
+.ticker-track b{color:var(--red);font-weight:600}
+.ticker-track i{color:var(--up);font-style:normal}
+@keyframes tick{to{transform:translateX(-100%)}}
+
+/* ================= layout ================= */
+main{max-width:1060px;margin:0 auto;padding:0 clamp(16px,4vw,32px)}
+.board-head{padding:44px 0 0;display:flex;justify-content:space-between;align-items:flex-end;gap:28px;flex-wrap:wrap}
+.kicker{display:inline-flex;align-items:center;gap:9px;font-family:var(--mono);font-size:11px;letter-spacing:.24em;color:var(--red)}
+.kicker::before{content:"";width:26px;height:1px;background:var(--red)}
+.kicker .sep{color:var(--dim)}
+h1{font-family:var(--serif);font-size:clamp(38px,5.6vw,60px);font-weight:900;letter-spacing:.04em;line-height:1.15;margin:10px 0 6px}
+.sub{color:var(--mut);font-size:15px;max-width:46ch}
+.sub b{color:var(--red);font-weight:700}
+.stats{display:flex;gap:0;border-left:1px solid var(--line2)}
+.stat{text-align:left;padding:0 24px;border-right:1px solid var(--line2)}
+.stat:last-child{border-right:none;padding-right:0}
+.stat .v{font-family:var(--mono);font-size:22px;font-weight:600;color:var(--red);font-variant-numeric:tabular-nums}
+.stat:first-child .v{color:var(--up)}
+.stat .k{font-size:11.5px;color:var(--dim);margin-top:1px;letter-spacing:.08em}
+.rules-line{margin:18px 0 0;padding:12px 0 14px;color:var(--dim);font-size:13px;
+  border-top:1px solid var(--line2);border-bottom:3px double var(--line2)}
+.rules-line b{color:var(--mut)}
+.rules-line a{color:var(--red);border-bottom:1px solid var(--red)}
+.rules-line a:hover{color:var(--red-deep)}
+
+/* ================= 榜一 ================= */
+.crown-wrap{margin-top:22px;background:var(--card);border:1px solid var(--ink);border-radius:6px;
+  box-shadow:8px 8px 0 rgba(28,24,19,.12);position:relative}
+.crown-wrap::before{content:"";position:absolute;top:6px;left:6px;right:6px;bottom:6px;
+  border:1px solid var(--gold);border-radius:3px;pointer-events:none;opacity:.55}
+.card1{padding:30px 34px 28px;display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:26px;align-items:center;position:relative}
+.seal{width:78px;height:78px;background:var(--red);border-radius:6px;transform:rotate(-4deg);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;flex:none;
+  box-shadow:inset 0 0 0 2px rgba(255,255,255,.6),inset 0 0 0 5px var(--red),inset 0 0 0 6.5px rgba(255,255,255,.45),0 3px 10px rgba(194,58,30,.3)}
+.seal .zi{font-family:var(--serif);font-size:36px;font-weight:900;color:#fff;line-height:1}
+.seal .cap{font-family:var(--mono);font-size:8.5px;color:rgba(255,255,255,.85);letter-spacing:.28em;margin-top:4px}
+.info .name-row{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.info .name{font-family:var(--serif);font-size:27px;font-weight:900;letter-spacing:.02em}
+.chip-held{font-family:var(--mono);font-size:10.5px;color:var(--gold);border:1px solid var(--gold);
+  background:var(--gold-soft);padding:1.5px 9px;border-radius:2px;white-space:nowrap}
+.info .host{font-family:var(--mono);font-size:12px;color:var(--dim)}
+.info .meta{font-size:12.5px;color:var(--dim);margin-top:6px}
+.info .meta a{color:var(--red);border-bottom:1px solid transparent}
+.info .meta a:hover{border-bottom-color:var(--red)}
+.bid1{text-align:right;padding-left:26px;border-left:1px solid var(--line2)}
+.bid1 .amt{font-family:var(--mono);font-size:36px;font-weight:700;color:var(--red);font-variant-numeric:tabular-nums;line-height:1.1;letter-spacing:-.01em}
+.bid1 .lbl{font-size:10.5px;color:var(--dim);letter-spacing:.3em;margin-top:2px}
+.btn-ghost{display:inline-block;margin-top:12px;font-size:12.5px;color:var(--ink);
+  border:1px solid var(--ink);padding:6px 15px;border-radius:3px;transition:all .15s}
+.btn-ghost:hover{background:var(--ink);color:var(--paper)}
+
+/* ================= rows ================= */
+.rows{list-style:none;margin-top:18px;counter-reset:rk}
+.row{display:grid;grid-template-columns:64px 46px minmax(0,1fr) auto;gap:18px;align-items:center;
+  padding:14px 20px;border:1px solid var(--line);border-radius:4px;background:var(--card);margin-top:8px;
+  opacity:0;animation:rise .35s forwards;transition:border-color .15s,box-shadow .15s,transform .15s}
+@keyframes rise{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.row:hover{border-color:var(--ink);box-shadow:4px 4px 0 rgba(28,24,19,.1);transform:translate(-1px,-1px)}
+.row.flash{animation:rise .35s forwards,rowFlash 1.8s .35s}
+@keyframes rowFlash{0%{background:#f7e6df;border-color:var(--red)}100%{}}
+.rk{display:flex;align-items:baseline;gap:6px}
+.rk .no{font-family:var(--serif);font-size:22px;font-weight:900;color:var(--ink);min-width:30px;font-variant-numeric:tabular-nums}
+.rk .delta{font-family:var(--mono);font-size:10.5px}
+.delta.up{color:var(--up)} .delta.down{color:var(--down)}
+.row .tile{width:44px;height:44px;font-size:18px;border-radius:3px;display:flex;align-items:center;justify-content:center;
+  font-family:var(--serif);font-weight:900;flex:none;border:1px solid var(--line2)}
+.info .name{font-family:var(--serif);font-size:16.5px;font-weight:900}
+.info .host{font-family:var(--mono);font-size:11.5px;color:var(--dim)}
+.cat-chip{font-size:11px;color:var(--mut);border:1px solid var(--line2);padding:0 8px;border-radius:2px;transition:all .12s}
+.cat-chip:hover{color:var(--red);border-color:var(--red)}
+.info .meta{font-size:11.5px;color:var(--dim);margin-top:2px}
+.info .meta .cph{font-family:var(--mono);color:var(--mut);font-variant-numeric:tabular-nums}
+.bid{text-align:right}
+.bid .amt{font-family:var(--mono);font-size:18px;font-weight:700;color:var(--ink);font-variant-numeric:tabular-nums;transition:color .15s}
+.row:hover .bid .amt{color:var(--red)}
+.bid .lbl{font-size:10.5px;color:var(--dim);letter-spacing:.16em}
+.more-note{text-align:center;padding:24px 0 8px;color:var(--dim);font-size:13px;font-family:var(--mono)}
+.more-note b{color:var(--mut);font-weight:500}
+.crumb{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--dim);margin-top:34px}
+.crumb a{color:var(--red);border-bottom:1px solid transparent}
+.crumb a:hover{border-bottom-color:var(--red)}
+.crumb .here{color:var(--ink);font-weight:600}
+
+/* ================= footer ================= */
+footer{max-width:1060px;margin:52px auto 0;border-top:1px solid var(--ink);
+  padding:22px clamp(16px,4vw,32px) 40px;display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;
+  color:var(--dim);font-size:12.5px}
+footer .brand{font-family:var(--serif);font-weight:900;color:var(--mut);letter-spacing:.1em}
+footer a{color:var(--red)}
+footer a:hover{color:var(--red-deep)}
+
+/* ================= modal ================= */
+.backdrop{position:fixed;inset:0;z-index:90;background:rgba(28,24,19,.45);backdrop-filter:blur(3px);
+  display:flex;align-items:center;justify-content:center;padding:20px;opacity:0;pointer-events:none;transition:opacity .18s}
+.backdrop.show{opacity:1;pointer-events:auto}
+.sheet{width:min(460px,100%);background:var(--card);border:1px solid var(--ink);border-radius:6px;
+  padding:28px;transform:translateY(10px);transition:transform .18s;position:relative;
+  box-shadow:8px 8px 0 rgba(28,24,19,.18)}
+.backdrop.show .sheet{transform:none}
+.sheet h3{font-family:var(--serif);font-size:23px;font-weight:900}
+.sheet h3::after{content:"";display:block;width:34px;height:3px;background:var(--red);margin-top:8px}
+.sheet .hint-sub{font-size:13px;color:var(--dim);margin:10px 0 18px}
+.field{margin-bottom:14px}
+.field label{display:block;font-size:12.5px;color:var(--mut);margin-bottom:6px;letter-spacing:.05em}
+.field input,.field select{width:100%;background:var(--field);border:1px solid var(--line2);border-radius:3px;
+  padding:10px 13px;color:var(--ink);font-size:14px;font-family:inherit;transition:border-color .15s}
+.field input:focus,.field select:focus{outline:none;border-color:var(--red)}
+.bid-field{display:flex;align-items:center;background:var(--field);border:1px solid var(--line2);border-radius:3px;transition:border-color .15s}
+.bid-field:focus-within{border-color:var(--red)}
+.bid-field .yen{padding:0 4px 0 13px;color:var(--red);font-family:var(--mono);font-weight:700}
+.bid-field input{border:none;background:none;padding:10px 13px 10px 2px}
+.bid-field input:focus{outline:none}
+.bid-hint{font-family:var(--mono);font-size:11.5px;color:var(--red);margin-top:6px}
+.sheet-actions{display:flex;gap:10px;margin-top:22px}
+.sheet-actions .btn-primary{flex:1;justify-content:center;padding:11px;background:var(--red);border-radius:3px}
+.sheet-actions .btn-primary:hover{background:var(--red-deep)}
+.btn-cancel{padding:11px 18px;border-radius:3px;border:1px solid var(--line2);color:var(--mut);font-size:14px}
+.btn-cancel:hover{color:var(--ink);border-color:var(--ink)}
+.sheet-x{position:absolute;top:16px;right:18px;color:var(--dim);font-size:20px;line-height:1}
+.sheet-x:hover{color:var(--red)}
+
+/* ================= toast ================= */
+.toast{position:fixed;right:24px;bottom:24px;z-index:99;background:var(--card);border:1px solid var(--ink);
+  border-left:4px solid var(--red);border-radius:4px;padding:12px 18px;font-size:13.5px;color:var(--ink);
+  box-shadow:6px 6px 0 rgba(28,24,19,.15);opacity:0;transform:translateY(14px);transition:all .25s;pointer-events:none;max-width:340px}
+.toast.show{opacity:1;transform:none}
+
+/* ================= responsive / motion ================= */
+@media (max-width:860px){
+  .stats{gap:0}
+  .stat{padding:0 14px}
+  .stat .v{font-size:17px}
+  .mega{grid-template-columns:repeat(2,1fr)}
+}
+@media (max-width:680px){
+  .nav-links .plain{display:none}
+  .card1{grid-template-columns:auto minmax(0,1fr);padding:24px 20px}
+  .bid1{grid-column:1/-1;display:flex;align-items:baseline;gap:14px;text-align:left;border-left:none;padding-left:0;border-top:1px solid var(--line2);padding-top:14px}
+  .bid1 .amt{font-size:26px}
+  .row{grid-template-columns:44px 40px minmax(0,1fr) auto;gap:10px;padding:12px 12px}
+  .info .meta{display:none}
+  .rules-line{display:none}
+}
+@media (prefers-reduced-motion:reduce){
+  *,.ticker-track{animation:none!important;transition:none!important}
+  .row{opacity:1}
+}
+</style>
+</head>
+<body>
+
+<!-- ======== 顶部导航 ======== -->
+<header class="nav">
+  <div class="nav-inner">
+    <a class="logo" href="#" onclick="switchView('all');return false">
+      <span class="seal-mini" aria-hidden="true">榜</span>
+      上榜公报<span class="tld">SHANGBANG.CN</span>
+    </a>
+    <nav class="nav-links">
+      <a href="#" class="nav-link plain" id="nav-all" onclick="switchView('all');return false">总榜</a>
+      <div class="drop" id="catDrop">
+        <button class="nav-link" id="catBtn" aria-expanded="false" aria-haspopup="true">
+          品类
+          <svg class="caret" width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><path d="M1 3l4 4 4-4" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round"/></svg>
+        </button>
+        <div class="mega" id="megaMenu" role="menu"></div>
+      </div>
+      <a href="#rules" class="nav-link plain" onclick="toast('完整规则页在路线图里，先把榜看爽～');return false">规则</a>
+    </nav>
+    <button class="btn-primary" onclick="openModal()">
+      <svg width="13" height="13" viewBox="0 0 12 12" aria-hidden="true"><path d="M6 1v10M1 6h10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      我要上榜
+    </button>
+  </div>
+</header>
+
+<!-- ======== 电讯条 ======== -->
+<div class="ticker">
+  <span class="ticker-label"><span class="live-dot"></span>电讯</span>
+  <div class="ticker-view"><div class="ticker-track" id="tickerTrack"></div></div>
+</div>
+
+<main>
+  <!-- ======== 面包屑 ======== -->
+  <div class="crumb" id="crumb" hidden>
+    <a href="#" onclick="switchView('all');return false">总榜</a>
+    <span>/</span><span class="here" id="crumbHere"></span>
+  </div>
+
+  <!-- ======== 页头 ======== -->
+  <section class="board-head">
+    <div>
+      <div class="kicker"><span id="kickerText">全站实时竞拍</span> <span class="sep">·</span> LIVE</div>
+      <h1 id="h1">价高者得。</h1>
+      <p class="sub">排名就是出价，<b>别的不算</b>。想上位？加钱❗</p>
+    </div>
+    <div class="stats">
+      <div class="stat"><div class="v" id="stOnline">—</div><div class="k">人正在围观</div></div>
+      <div class="stat"><div class="v" id="stPool">—</div><div class="k">本榜累计出价</div></div>
+      <div class="stat"><div class="v" id="stRaises">—</div><div class="k">今日加价次数</div></div>
+    </div>
+  </section>
+  <p class="rules-line" id="rules">规则很简单：整元出价，<b>¥5</b> 起步；被反超就掉名次，补回差价立刻夺回。<a href="#" onclick="toast('完整规则页开发中，先看榜～');return false">完整规则</a></p>
+
+  <!-- ======== 榜一 ======== -->
+  <section id="top1Wrap" aria-label="当前第一"></section>
+
+  <!-- ======== 其余名次 ======== -->
+  <ol class="rows" id="rows"></ol>
+  <p class="more-note" id="moreNote"></p>
+</main>
+
+<footer>
+  <div><span class="brand">上榜公报</span> · 排名即出价，别无其他</div>
+  <div>演示原型，灵感来自 <a href="https://outbid.lol" target="_blank" rel="noopener">outbid.lol</a> · 页面上所有品牌与金额均为虚构</div>
+</footer>
+
+<!-- ======== 出价弹窗 ======== -->
+<div class="backdrop" id="modalBack" role="dialog" aria-modal="true" aria-labelledby="mTitle">
+  <div class="sheet">
+    <button class="sheet-x" onclick="closeModal()" aria-label="关闭">×</button>
+    <h3 id="mTitle">出价上榜</h3>
+    <p class="hint-sub">填个链接和出价，付款后即刻上墙（本原型不接支付）。</p>
+    <div class="field">
+      <label for="fCat">选择榜单</label>
+      <select id="fCat"></select>
+    </div>
+    <div class="field">
+      <label for="fUrl">网站 / 主页链接</label>
+      <input id="fUrl" type="url" placeholder="https://example.com 或 @handle" autocomplete="off">
+    </div>
+    <div class="field">
+      <label for="fname">展示名称</label>
+      <input id="fname" type="text" maxlength="16" placeholder="例如：杂鱼牌猫粮旗舰店" autocomplete="off">
+    </div>
+    <div class="field">
+      <label for="fBid">出价（整元）</label>
+      <div class="bid-field"><span class="yen">¥</span><input id="fBid" type="number" min="5" step="1" placeholder="≥ 5"></div>
+      <div class="bid-hint" id="bidHint"></div>
+    </div>
+    <div class="sheet-actions">
+      <button class="btn-cancel" onclick="closeModal()">先不出</button>
+      <button class="btn-primary" onclick="submitBid()">锁定位子</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toastEl" role="status"></div>
+
+<script>
+/* ============================================================
+   上榜公报 · 前端原型（v3 公报风） —— 全部数据为演示用虚构数据
+   ============================================================ */
+
+const CATS = [
+  {id:'tea',    name:'新茶饮咖啡'},
+  {id:'food',   name:'餐饮连锁'},
+  {id:'beauty', name:'美妆个护'},
+  {id:'fit',    name:'运动健身'},
+  {id:'toys',   name:'潮玩手办'},
+  {id:'game',   name:'游戏动漫'},
+  {id:'social', name:'内容社区'},
+  {id:'ecom',   name:'电商平台'},
+  {id:'tech',   name:'科技数码'},
+  {id:'travel', name:'出行旅游'},
+  {id:'edu',    name:'教育学习'},
+];
+const GROUPS = [
+  {t:'消费生活', items:['tea','food','beauty','fit']},
+  {t:'潮流文娱', items:['toys','game','social']},
+  {t:'科技电商', items:['ecom','tech']},
+  {t:'出行教育', items:['travel','edu']},
+];
+
+const E = (id,name,host,cat,bid,cph,held)=>({id,name,host,cat,bid,cph,held});
+let ENTRIES = [
+  E('luckin','瑞幸咖啡','luckincoffee.com','tea',18600,412,'3天11小时'),
+  E('mxbc','蜜雪冰城','mxbc.com','tea',15200,388,'1天22小时'),
+  E('heytea','喜茶','heytea.com','tea',9400,205,'6小时14分'),
+  E('chagee','霸王茶姬','chagee.com','tea',8100,177,'2天3小时'),
+  E('cotti','库迪咖啡','cotti.com.cn','tea',3000,64,'9小时41分'),
+  E('haidilao','海底捞','haidilao.com','food',11200,246,'4天8小时'),
+  E('tastien','塔斯汀','tastien.com','food',6800,151,'1天5小时'),
+  E('taier','太二酸菜鱼','taiersuancai.com','food',5400,119,'16小时2分'),
+  E('wallace','华莱士','jhwallace.cn','food',3200,58,'3天19小时'),
+  E('lxc','老乡鸡','laoxiangji.com','food',2100,41,'11小时26分'),
+  E('florasis','花西子','florasis.com','beauty',9800,188,'2天16小时'),
+  E('proya','珀莱雅','proya.com','beauty',8600,163,'5天2小时'),
+  E('winona','薇诺娜','winona.com.cn','beauty',6200,127,'1天9小时'),
+  E('pdiary','完美日记','perfectdiary.com','beauty',3500,72,'20小时33分'),
+  E('tosummer','观夏','tosummer.cn','beauty',2800,53,'7小时48分'),
+  E('keep','Keep','gotokeep.com','fit',6400,138,'2天12小时'),
+  E('lulu','lululemon 中国','lululemon.com.cn','fit',5100,109,'4天1小时'),
+  E('supermonkey','超级猩猩','supermonkey.com.cn','fit',4700,95,'13小时57分'),
+  E('lefit','乐刻运动','lefit.com','fit',3300,61,'1天17小时'),
+  E('beneunder','蕉下','beneunder.com','fit',2900,49,'8小时5分'),
+  E('popmart','泡泡玛特 LABUBU','popmart.com','toys',52800,1024,'6小时14分'),
+  E('kayou','卡游','kayou.com','toys',16800,296,'2天20小时'),
+  E('toptoy','TOP TOY','toptoy.cn','toys',9200,171,'3天6小时'),
+  E('52toys','52TOYS','52toys.com','toys',4800,87,'1天2小时'),
+  E('rolife','若来 Rolife','rolifefun.com','toys',2400,44,'10小时12分'),
+  E('genshin','原神','yuanshen.com','game',22800,507,'4天15小时'),
+  E('wzry','王者荣耀','pvp.qq.com','game',19500,463,'5天9小时'),
+  E('eggyparty','蛋仔派对','eggyparty.163.com','game',12600,254,'1天13小时'),
+  E('deepspace','恋与深空','deepspace.papegames.com','game',7300,148,'2天7小时'),
+  E('arknights','明日方舟','ak.hypergryph.com','game',5900,113,'3天14小时'),
+  E('xhs','小红书','xiaohongshu.com','social',24500,531,'3天3小时'),
+  E('douyin','抖音商城','douyin.com','social',17800,372,'2天18小时'),
+  E('bili','哔哩哔哩','bilibili.com','social',13400,281,'6天4小时'),
+  E('zhihu','知乎盐选','zhihu.com','social',4200,83,'1天8小时'),
+  E('jimeng','即梦 AI','jimeng.jianying.com','social',3600,77,'15小时19分'),
+  E('tmall','天猫超级旗舰','tmall.com','ecom',12800,264,'4天11小时'),
+  E('pdd','拼多多百亿补贴','pinduoduo.com','ecom',9600,213,'2天2小时'),
+  E('jd','京东自营','jd.com','ecom',8800,196,'5天16小时'),
+  E('dewu','得物','dewu.com','ecom',5200,104,'1天6小时'),
+  E('goofish','闲鱼','goofish.com','ecom',2600,47,'9小时58分'),
+  E('huawei','华为商城','vmall.com','tech',15800,301,'3天9小时'),
+  E('mi','小米商城','mi.com','tech',12200,243,'2天21小时'),
+  E('dji','大疆商城','dji.com','tech',7500,156,'1天11小时'),
+  E('insta360','影石 Insta360','insta360.com','tech',4300,89,'18小时44分'),
+  E('meizu','魅族','meizu.com','tech',1900,33,'6小时52分'),
+  E('ctrip','携程旅行','ctrip.com','travel',13600,277,'4天6小时'),
+  E('didi','滴滴出行','didiglobal.com','travel',11800,238,'3天17小时'),
+  E('ly','同程旅行','ly.com','travel',7600,149,'2天5小时'),
+  E('hello','哈啰','hellobike.com','travel',3800,69,'12小时31分'),
+  E('rail','12306','12306.cn','travel',2200,58,'7天2小时'),
+  E('dedao','得到','dedao.cn','edu',7200,132,'3天13小时'),
+  E('youdao','有道','youdao.com','edu',5600,107,'2天9小时'),
+  E('hundun','混沌学园','hundun.cn','edu',3100,55,'1天15小时'),
+  E('zebra','斑马 AI 课','zebra.ai','edu',2500,42,'10小时47分'),
+  E('duolingo','多邻国','duolingo.cn','edu',1800,29,'8小时23分'),
+];
+
+/* ---------------- state ---------------- */
+const state = {
+  view: 'all',
+  raises: 137,
+  prevRank: new Map(),
+  flash: new Set(),
+};
+const $ = s => document.querySelector(s);
+const catOf = id => CATS.find(c=>c.id===id);
+const fmt = n => '¥' + n.toLocaleString('zh-CN');
+
+/* ---------------- helpers ---------------- */
+function hueOf(str){ let h=0; for(const ch of str) h=(h*31+ch.codePointAt(0))%997; return (h*47)%360; }
+function tileHtml(e,cls){
+  const h=hueOf(e.name);
+  return `<span class="tile ${cls||''}" style="background:hsl(${h} 30% 93%);color:hsl(${h} 45% 30%)">${e.name[0]}</span>`;
+}
+function boardList(id){
+  return id==='all'
+    ? [...ENTRIES].sort((a,b)=>b.bid-a.bid)
+    : ENTRIES.filter(e=>e.cat===id).sort((a,b)=>b.bid-a.bid);
+}
+function deltaHtml(e,newRank){
+  if(!state.prevRank.has(e.id)) return '';
+  const d = state.prevRank.get(e.id) - newRank;
+  if(d===0) return '';
+  return d>0 ? `<span class="delta up">▲${d}</span>` : `<span class="delta down">▼${-d}</span>`;
+}
+
+/* ---------------- render ---------------- */
+function render(){
+  const isAll = state.view==='all';
+  const cat = catOf(state.view);
+  $('#crumb').hidden = isAll;
+  if(!isAll) $('#crumbHere').textContent = cat.name;
+  $('#h1').textContent = isAll ? '价高者得。' : `${cat.name} · 价高者得`;
+  $('#kickerText').textContent = isAll ? '全站实时竞拍' : `${cat.name}榜实时竞拍`;
+  $('#nav-all').classList.toggle('active', isAll);
+  $('#catBtn').classList.toggle('active', !isAll);
+
+  const list = boardList(state.view);
+  const top = list[0];
+
+  $('#top1Wrap').innerHTML = `
+  <div class="crown-wrap">
+    <div class="card1">
+      <div class="seal"><span class="zi">魁</span><span class="cap">NO.1</span></div>
+      <div class="info">
+        <div class="name-row">
+          <span class="name">${top.name}</span>
+          <span class="chip-held">在位 ${top.held}</span>
+        </div>
+        <div class="host">${top.host}</div>
+        <div class="meta">
+          ${isAll?`<a href="#" onclick="switchView('${top.cat}');return false">${catOf(top.cat).name}榜</a> · `:''}
+          <span class="cph" data-cph="${top.id}">${top.cph}</span> 次点击/时 · 随时可被超越
+        </div>
+      </div>
+      <div class="bid1">
+        <div><div class="amt" data-amt="${top.id}">${fmt(top.bid)}</div><div class="lbl">当前出价</div></div>
+        <button class="btn-ghost" onclick="openModal('${top.cat}')">出价超越它</button>
+      </div>
+    </div>
+  </div>`;
+
+  $('#rows').innerHTML = list.slice(1).map((e,i)=>{
+    const rk=i+2;
+    return `
+    <li class="row ${state.flash.has(e.id)?'flash':''}" style="animation-delay:${i*35}ms">
+      <div class="rk"><span class="no">${rk}</span>${deltaHtml(e,rk)}</div>
+      ${tileHtml(e)}
+      <div class="info">
+        <div><span class="name">${e.name}</span>&nbsp;&nbsp;<span class="host">${e.host}</span></div>
+        <div class="meta">
+          <a class="cat-chip" href="#" onclick="switchView('${e.cat}');return false">${catOf(e.cat).name}</a>
+          &nbsp;<span class="cph" data-cph="${e.id}">${e.cph}</span> 次点击/时
+        </div>
+      </div>
+      <div class="bid"><div class="amt" data-amt="${e.id}">${fmt(e.bid)}</div><div class="lbl">出价</div></div>
+    </li>`;
+  }).join('');
+
+  const total = isAll ? ENTRIES.length : list.length;
+  const shown = Math.min(list.length, 10);
+  $('#moreNote').innerHTML =
+    `—— 已展示前 ${shown} 名 · 本榜共 <b>${total}</b> 个在榜条目 · 每一笔加价都会实时改写这个页面 ——`;
+
+  state.prevRank = new Map(list.map((e,i)=>[e.id,i+1]));
+  state.flash.clear();
+}
+
+function updateStats(){
+  const isAll = state.view==='all';
+  const pool = (isAll?ENTRIES:ENTRIES.filter(e=>e.cat===state.view)).reduce((s,e)=>s+e.bid,0);
+  $('#stPool').textContent = fmt(pool);
+  $('#stRaises').textContent = state.raises.toLocaleString('zh-CN');
+  const base = 236 + Math.round(Math.sin(Date.now()/60000)*24);
+  $('#stOnline').textContent = base.toLocaleString('zh-CN');
+}
+
+/* ---------------- ticker ---------------- */
+let tickerMsgs = [
+  '泡泡玛特 LABUBU 以 <b>¥52,800</b> 登顶总榜',
+  '瑞幸咖啡 加价 <i>¥800</i> 反超蜜雪冰城',
+  '蜜雪冰城 正在攒钱准备复仇',
+  '12306 出现神秘出价，全网震惊',
+  '喜茶 在位 <i>6小时14分</i> 后被霸王茶姬盯上',
+];
+function renderTicker(){
+  const half = tickerMsgs.map(m=>`&nbsp;&nbsp;◆&nbsp;&nbsp;${m}`).join('');
+  $('#tickerTrack').innerHTML = half + half;
+}
+function pushTicker(msg){ tickerMsgs.unshift(msg); tickerMsgs = tickerMsgs.slice(0,8); renderTicker(); }
+
+/* ---------------- live simulation ---------------- */
+function cphTick(){
+  for(let k=0;k<3;k++){
+    const e = ENTRIES[Math.floor(Math.random()*ENTRIES.length)];
+    e.cph += 1 + Math.floor(Math.random()*9);
+    const el = document.querySelector(`[data-cph="${e.id}"]`);
+    if(el) el.textContent = e.cph.toLocaleString('zh-CN');
+  }
+}
+const RAISE_POOL=[50,100,100,200,200,300,500,500,800,1000,1500];
+function bidTick(){
+  let pool = ENTRIES.filter(e=>!(state.view==='all' && e.id==='popmart') || Math.random()<.12);
+  if(state.view!=='all'){ const inView=pool.filter(e=>e.cat===state.view); if(inView.length) pool=inView; }
+  const e = pool[Math.floor(Math.random()*pool.length)];
+  const raise = RAISE_POOL[Math.floor(Math.random()*RAISE_POOL.length)];
+  const oldRank = state.prevRank.get(e.id);
+  e.bid += raise;
+  state.raises += 1;
+
+  const list = boardList(state.view);
+  const newRank = list.findIndex(x=>x.id===e.id)+1;
+  const ctx = (oldRank && oldRank!==newRank) ? `，升至第<i>${newRank}</i>名` : ` · ${catOf(e.cat).name}`;
+  pushTicker(`${e.name} 加价 <b>${fmt(raise)}</b>${ctx}`);
+
+  state.flash.add(e.id);
+  render();
+  updateStats();
+}
+
+/* ---------------- view switching ---------------- */
+function switchView(id){
+  if(id!=='all' && !catOf(id)) id='all';
+  state.view=id;
+  history.replaceState(null,'', id==='all' ? '#' : '#'+id);
+  render(); updateStats();
+  window.scrollTo({top:0, behavior:'smooth'});
+  closeMega();
+}
+
+/* ---------------- mega menu ---------------- */
+function buildMega(){
+  const cnt = id => ENTRIES.filter(e=>e.cat===id).length;
+  $('#megaMenu').innerHTML = GROUPS.map(g=>`
+    <div class="mega-group">
+      <h5>${g.t}</h5>
+      ${g.items.map(cid=>`
+        <button class="mega-item" data-cat="${cid}" onclick="switchView('${cid}')">
+          <span>${catOf(cid).name}</span><span class="n">${cnt(cid)}</span>
+        </button>`).join('')}
+    </div>`).join('')
+    + `<div class="mega-foot">${CATS.length} 个分类 · ${ENTRIES.length} 个在榜条目 · 点击任意分类查看分榜</div>`;
+}
+function openMega(){ $('#catDrop').classList.add('open'); $('#catBtn').setAttribute('aria-expanded','true');
+  document.querySelectorAll('.mega-item').forEach(b=>b.classList.toggle('active', b.dataset.cat===state.view)); }
+function closeMega(){ $('#catDrop').classList.remove('open'); $('#catBtn').setAttribute('aria-expanded','false'); }
+
+/* ---------------- modal ---------------- */
+function buildCatSelect(){
+  $('#fCat').innerHTML = CATS.map(c=>`<option value="${c.id}">${c.name}榜</option>`).join('');
+}
+function refreshBidHint(){
+  const cid=$('#fCat').value || 'tea';
+  const top=Math.max(...ENTRIES.filter(e=>e.cat===cid).map(e=>e.bid));
+  $('#bidHint').textContent=`当前「${catOf(cid).name}」登顶价 ${fmt(top)}，出价 ≥ ¥${(top+1).toLocaleString('zh-CN')} 即夺榜首`;
+}
+function openModal(cat){
+  if(cat) $('#fCat').value=cat;
+  refreshBidHint();
+  $('#modalBack').classList.add('show');
+  setTimeout(()=>$('#fBid').focus(),120);
+}
+function closeModal(){ $('#modalBack').classList.remove('show'); }
+function submitBid(){
+  const url=$('#fUrl').value.trim(), name=$('#fname').value.trim(), bid=parseInt($('#fBid').value,10);
+  const cid=$('#fCat').value;
+  if(!url) return toast('链接都不填，你想让杂鱼猜吗？');
+  if(!name) return toast('给个名字，不然墙上写什么？');
+  if(!bid || bid<5) return toast('出价至少 ¥5，整数。');
+  let host=url.replace(/^https?:\/\//,'').replace(/\/.*$/,'') || url;
+  ENTRIES.push({id:'u'+Date.now(),name,host,cat:cid,bid,cph:Math.floor(Math.random()*40)+8,held:'刚刚'});
+  closeModal();
+  $('#fUrl').value='';$('#fname').value='';$('#fBid').value='';
+  toast(`出价成功！已把「${name}」钉上${catOf(cid).name}榜（原型演示，未扣款喵）`);
+  switchView(cid);
+  state.flash.add(name);
+  render();
+}
+
+/* ---------------- toast ---------------- */
+let toastTimer=null;
+function toast(msg){
+  const el=$('#toastEl'); el.textContent=msg; el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer=setTimeout(()=>el.classList.remove('show'),3200);
+}
+
+/* ---------------- boot ---------------- */
+function boot(){
+  buildMega(); buildCatSelect(); renderTicker();
+
+  $('#catBtn').addEventListener('click', ev=>{
+    ev.stopPropagation();
+    $('#catDrop').classList.contains('open') ? closeMega() : openMega();
+  });
+  document.addEventListener('click', ev=>{ if(!ev.target.closest('#catDrop')) closeMega(); });
+  document.addEventListener('keydown', ev=>{
+    if(ev.key==='Escape'){ closeModal(); closeMega(); }
+  });
+  $('#modalBack').addEventListener('click', ev=>{ if(ev.target===$('#modalBack')) closeModal(); });
+  $('#fCat').addEventListener('change', refreshBidHint);
+
+  const hash=location.hash.replace('#','');
+  state.view = (hash && catOf(hash)) ? hash : 'all';
+  render(); updateStats();
+
+  setInterval(cphTick, 4000);
+  setInterval(bidTick, 11000);
+}
+boot();
+</script>
+</body>
+</html>

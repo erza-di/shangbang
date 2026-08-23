@@ -1,0 +1,6 @@
+node_modules/
+data/
+*.log
+scripts/fix-ngrok.sh
+scripts/claim-domain.sh
+scripts/write-ngrok-b.sh

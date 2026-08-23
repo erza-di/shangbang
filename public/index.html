@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>上榜公报 · 价高者得 —— 全站实时竞价排行</title>
+<meta name="description" content="排名即出价，别无其他。中国市场的实时竞价排行榜。">
+<style>
+/* ================= tokens · 公报风：米白纸 + 墨 + 朱红 ================= */
+:root{
+  --paper:#f6f2ea; --paper2:#efe9dd; --card:#fbf8f2; --field:#f2ede3;
+  --line:#ddd5c5; --line2:#c8bfab;
+  --ink:#1c1813; --mut:#6e675a; --dim:#a39a89;
+  --red:#c23a1e; --red-deep:#9e2c14; --gold:#a07c2c; --gold-soft:#f3ead0;
+  --up:#1e7a4f; --down:#c23a1e;
+  --serif:"Noto Serif SC","Source Han Serif SC","Songti SC","STSong",NSimSun,SimSun,serif;
+  --sans:"PingFang SC","HarmonyOS Sans SC","Microsoft YaHei",system-ui,sans-serif;
+  --mono:ui-monospace,"Cascadia Mono",Consolas,"Courier New",monospace;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scrollbar-color:var(--line2) var(--paper)}
+body{background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.65;-webkit-font-smoothing:antialiased}
+body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;opacity:.5;
+  background-image:repeating-linear-gradient(0deg,rgba(120,100,70,.022) 0 1px,transparent 1px 3px)}
+::selection{background:var(--red);color:#fff}
+a{color:inherit;text-decoration:none}
+button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
+:focus-visible{outline:2px solid var(--red);outline-offset:2px;border-radius:2px}
+
+/* ================= nav ================= */
+.nav{position:sticky;top:0;z-index:50;background:var(--paper);border-bottom:1px solid var(--ink)}
+.nav-inner{max-width:1060px;margin:0 auto;display:flex;align-items:center;gap:26px;
+  height:64px;padding:0 clamp(16px,4vw,32px)}
+.logo{display:flex;align-items:baseline;gap:8px;font-family:var(--serif);font-size:23px;font-weight:900;letter-spacing:.06em}
+.logo .seal-mini{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;
+  background:var(--red);color:#fff;font-family:var(--serif);font-size:14px;font-weight:700;border-radius:3px;
+  transform:translateY(4px) rotate(-4deg);box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.55)}
+.logo .tld{font-family:var(--mono);font-size:11px;color:var(--dim);letter-spacing:.05em}
+.nav-links{display:flex;align-items:center;gap:2px;margin-right:auto}
+.nav-link{padding:8px 12px;font-size:14px;color:var(--mut);display:flex;align-items:center;gap:6px;
+  border-bottom:2px solid transparent;transition:color .15s,border-color .15s}
+.nav-link:hover{color:var(--ink)}
+.nav-link.active{color:var(--red);border-bottom-color:var(--red);font-weight:600}
+.drop{position:relative}
+.drop .caret{transition:transform .18s}
+.drop.open .caret{transform:rotate(180deg)}
+.drop.open>.nav-link{color:var(--ink)}
+.mega{position:absolute;top:calc(100% + 14px);left:50%;transform:translateX(-50%) translateY(-4px);
+  width:min(660px,94vw);background:var(--card);border:1px solid var(--ink);border-radius:6px;
+  box-shadow:6px 6px 0 rgba(28,24,19,.14);padding:20px 22px 14px;
+  display:none;opacity:0;transition:opacity .15s,transform .15s}
+.drop.open .mega{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;opacity:1;transform:translateX(-50%) translateY(0)}
+.mega-group h5{font-family:var(--serif);font-size:12px;font-weight:900;color:var(--red);letter-spacing:.2em;
+  margin-bottom:8px;padding-bottom:5px;border-bottom:1px solid var(--line2)}
+.mega-item{display:flex;justify-content:space-between;align-items:center;width:100%;
+  padding:5px 7px;border-radius:3px;font-size:13.5px;color:var(--mut);text-align:left;transition:background .12s,color .12s}
+.mega-item:hover{background:var(--paper2);color:var(--ink)}
+.mega-item.active{color:var(--red);font-weight:600}
+.mega-item .n{font-family:var(--mono);font-size:11px;color:var(--dim)}
+.mega-foot{grid-column:1/-1;border-top:1px dashed var(--line2);margin-top:4px;padding-top:9px;
+  font-family:var(--mono);font-size:11px;color:var(--dim);text-align:center}
+.btn-primary{display:inline-flex;align-items:center;gap:7px;background:var(--ink);color:var(--paper);
+  font-weight:700;font-size:14px;padding:9px 18px;border-radius:3px;transition:background .15s,transform .1s}
+.btn-primary:hover{background:var(--red)}
+.btn-primary:active{transform:scale(.97)}
+
+/* ================= 电讯条 ================= */
+.ticker{height:36px;border-bottom:1px solid var(--line2);overflow:hidden;display:flex;align-items:center;background:var(--paper2)}
+.ticker-label{flex:none;display:flex;align-items:center;gap:7px;height:100%;padding:0 14px;
+  font-family:var(--serif);font-size:12px;font-weight:900;color:var(--paper);background:var(--red);letter-spacing:.22em}
+.live-dot{width:6px;height:6px;border-radius:50%;background:#fff;animation:pulse 1.6s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.25}}
+.ticker-view{overflow:hidden;flex:1}
+.ticker-track{display:inline-block;white-space:nowrap;font-family:var(--mono);font-size:12px;color:var(--mut);
+  padding-left:100%;animation:tick 46s linear infinite;animation-delay:-14s}
+.ticker-track b{color:var(--red);font-weight:600}
+@keyframes tick{to{transform:translateX(-100%)}}
+
+/* ================= layout ================= */
+main{max-width:1060px;margin:0 auto;padding:0 clamp(16px,4vw,32px)}
+.board-head{padding:44px 0 0;display:flex;justify-content:space-between;align-items:flex-end;gap:28px;flex-wrap:wrap}
+.kicker{display:inline-flex;align-items:center;gap:9px;font-family:var(--mono);font-size:11px;letter-spacing:.24em;color:var(--red)}
+.kicker::before{content:"";width:26px;height:1px;background:var(--red)}
+.kicker .sep{color:var(--dim)}
+h1{font-family:var(--serif);font-size:clamp(38px,5.6vw,60px);font-weight:900;letter-spacing:.04em;line-height:1.15;margin:10px 0 6px}
+.sub{color:var(--mut);font-size:15px;max-width:46ch}
+.sub b{color:var(--red);font-weight:700}
+.stats{display:flex;gap:0;border-left:1px solid var(--line2)}
+.stat{text-align:left;padding:0 24px;border-right:1px solid var(--line2)}
+.stat:last-child{border-right:none;padding-right:0}
+.stat .v{font-family:var(--mono);font-size:22px;font-weight:600;color:var(--red);font-variant-numeric:tabular-nums}
+.stat:first-child .v{color:var(--up)}
+.stat .k{font-size:11.5px;color:var(--dim);margin-top:1px;letter-spacing:.08em}
+.rules-line{margin:18px 0 0;padding:12px 0 14px;color:var(--dim);font-size:13px;
+  border-top:1px solid var(--line2);border-bottom:3px double var(--line2)}
+.rules-line b{color:var(--mut)}
+.rules-line a{color:var(--red);border-bottom:1px solid var(--red)}
+.rules-line a:hover{color:var(--red-deep)}
+
+/* ================= 榜一 ================= */
+.crown-wrap{margin-top:22px;background:var(--card);border:1px solid var(--ink);border-radius:6px;
+  box-shadow:8px 8px 0 rgba(28,24,19,.12);position:relative}
+.crown-wrap::before{content:"";position:absolute;top:6px;left:6px;right:6px;bottom:6px;
+  border:1px solid var(--gold);border-radius:3px;pointer-events:none;opacity:.55}
+.card1{padding:30px 34px 28px;display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:26px;align-items:center;position:relative}
+.seal{width:78px;height:78px;background:var(--red);border-radius:6px;transform:rotate(-4deg);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;flex:none;
+  box-shadow:inset 0 0 0 2px rgba(255,255,255,.6),inset 0 0 0 5px var(--red),inset 0 0 0 6.5px rgba(255,255,255,.45),0 3px 10px rgba(194,58,30,.3)}
+.seal .zi{font-family:var(--serif);font-size:36px;font-weight:900;color:#fff;line-height:1}
+.seal .cap{font-family:var(--mono);font-size:8.5px;color:rgba(255,255,255,.85);letter-spacing:.28em;margin-top:4px}
+.info .name-row{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.info .name{font-family:var(--serif);font-size:27px;font-weight:900;letter-spacing:.02em;overflow-wrap:anywhere}
+.chip-held{font-family:var(--mono);font-size:10.5px;color:var(--gold);border:1px solid var(--gold);
+  background:var(--gold-soft);padding:1.5px 9px;border-radius:2px;white-space:nowrap}
+.info .host{font-family:var(--mono);font-size:12px;color:var(--dim);overflow-wrap:anywhere}
+.info .meta{font-size:12.5px;color:var(--dim);margin-top:6px}
+.info .meta a{color:var(--red);border-bottom:1px solid transparent}
+.info .meta a:hover{border-bottom-color:var(--red)}
+.bid1{text-align:right;padding-left:26px;border-left:1px solid var(--line2)}
+.bid1 .amt{font-family:var(--mono);font-size:36px;font-weight:700;color:var(--red);font-variant-numeric:tabular-nums;line-height:1.1;letter-spacing:-.01em}
+.bid1 .lbl{font-size:10.5px;color:var(--dim);letter-spacing:.3em;margin-top:2px}
+.btn-ghost{display:inline-block;margin-top:12px;font-size:12.5px;color:var(--ink);
+  border:1px solid var(--ink);padding:6px 15px;border-radius:3px;transition:all .15s}
+.btn-ghost:hover{background:var(--ink);color:var(--paper)}
+
+/* ================= rows ================= */
+.rows{list-style:none;margin-top:18px}
+.row{display:grid;grid-template-columns:64px 46px minmax(0,1fr) auto;gap:18px;align-items:center;
+  padding:14px 20px;border:1px solid var(--line);border-radius:4px;background:var(--card);margin-top:8px;
+  opacity:0;animation:rise .35s forwards;transition:border-color .15s,box-shadow .15s,transform .15s}
+@keyframes rise{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.row:hover{border-color:var(--ink);box-shadow:4px 4px 0 rgba(28,24,19,.1);transform:translate(-1px,-1px)}
+.row.flash{animation:rise .35s forwards,rowFlash 1.8s .35s}
+@keyframes rowFlash{0%{background:#f7e6df;border-color:var(--red)}100%{}}
+.rk{display:flex;align-items:baseline;gap:6px}
+.rk .no{font-family:var(--serif);font-size:22px;font-weight:900;color:var(--ink);min-width:30px;font-variant-numeric:tabular-nums}
+.rk .delta{font-family:var(--mono);font-size:10.5px}
+.delta.up{color:var(--up)} .delta.down{color:var(--down)}
+.row .tile{width:44px;height:44px;font-size:18px;border-radius:3px;display:flex;align-items:center;justify-content:center;
+  font-family:var(--serif);font-weight:900;flex:none;border:1px solid var(--line2)}
+.info .name{font-family:var(--serif);font-size:16.5px;font-weight:900;overflow-wrap:anywhere}
+.info .host{font-family:var(--mono);font-size:11.5px;color:var(--dim)}
+.cat-chip{font-size:11px;color:var(--mut);border:1px solid var(--line2);padding:0 8px;border-radius:2px;transition:all .12s}
+.cat-chip:hover{color:var(--red);border-color:var(--red)}
+.info .meta{font-size:11.5px;color:var(--dim);margin-top:2px}
+.info .meta .cph{font-family:var(--mono);color:var(--mut);font-variant-numeric:tabular-nums}
+.bid{text-align:right}
+.bid .amt{font-family:var(--mono);font-size:18px;font-weight:700;color:var(--ink);font-variant-numeric:tabular-nums;transition:color .15s}
+.row:hover .bid .amt{color:var(--red)}
+.bid .lbl{font-size:10.5px;color:var(--dim);letter-spacing:.16em}
+.more-note{text-align:center;padding:24px 0 8px;color:var(--dim);font-size:13px;font-family:var(--mono)}
+.more-note b{color:var(--mut);font-weight:500}
+.crumb{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--dim);margin-top:34px}
+.crumb a{color:var(--red);border-bottom:1px solid transparent}
+.crumb a:hover{border-bottom-color:var(--red)}
+.crumb .here{color:var(--ink);font-weight:600}
+
+/* ================= footer ================= */
+footer{max-width:1060px;margin:52px auto 0;border-top:1px solid var(--ink);
+  padding:22px clamp(16px,4vw,32px) 40px;display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;
+  color:var(--dim);font-size:12.5px}
+footer .brand{font-family:var(--serif);font-weight:900;color:var(--mut);letter-spacing:.1em}
+footer a{color:var(--red)}
+footer a:hover{color:var(--red-deep)}
+
+/* ================= modal ================= */
+.backdrop{position:fixed;inset:0;z-index:90;background:rgba(28,24,19,.45);backdrop-filter:blur(3px);
+  display:flex;align-items:center;justify-content:center;padding:20px;opacity:0;pointer-events:none;transition:opacity .18s}
+.backdrop.show{opacity:1;pointer-events:auto}
+.sheet{width:min(460px,100%);background:var(--card);border:1px solid var(--ink);border-radius:6px;
+  padding:28px;transform:translateY(10px);transition:transform .18s;position:relative;
+  box-shadow:8px 8px 0 rgba(28,24,19,.18)}
+.backdrop.show .sheet{transform:none}
+.sheet h3{font-family:var(--serif);font-size:23px;font-weight:900}
+.sheet h3::after{content:"";display:block;width:34px;height:3px;background:var(--red);margin-top:8px}
+.sheet .hint-sub{font-size:13px;color:var(--dim);margin:10px 0 18px}
+.field{margin-bottom:14px}
+.field label{display:block;font-size:12.5px;color:var(--mut);margin-bottom:6px;letter-spacing:.05em}
+.field input,.field select{width:100%;background:var(--field);border:1px solid var(--line2);border-radius:3px;
+  padding:10px 13px;color:var(--ink);font-size:14px;font-family:inherit;transition:border-color .15s}
+.field input:focus,.field select:focus{outline:none;border-color:var(--red)}
+.bid-field{display:flex;align-items:center;background:var(--field);border:1px solid var(--line2);border-radius:3px;transition:border-color .15s}
+.bid-field:focus-within{border-color:var(--red)}
+.bid-field .yen{padding:0 4px 0 13px;color:var(--red);font-family:var(--mono);font-weight:700}
+.bid-field input{border:none;background:none;padding:10px 13px 10px 2px}
+.bid-field input:focus{outline:none}
+.bid-hint{font-family:var(--mono);font-size:11.5px;color:var(--red);margin-top:6px}
+.form-err{font-size:12.5px;color:var(--red);margin-top:8px;min-height:1.2em}
+.sheet-actions{display:flex;gap:10px;margin-top:18px}
+.sheet-actions .btn-primary{flex:1;justify-content:center;padding:11px;background:var(--red)}
+.sheet-actions .btn-primary:hover{background:var(--red-deep)}
+.sheet-actions .btn-primary:disabled{opacity:.55;cursor:not-allowed}
+.btn-cancel{padding:11px 18px;border-radius:3px;border:1px solid var(--line2);color:var(--mut);font-size:14px}
+.btn-cancel:hover{color:var(--ink);border-color:var(--ink)}
+.sheet-x{position:absolute;top:16px;right:18px;color:var(--dim);font-size:20px;line-height:1}
+.sheet-x:hover{color:var(--red)}
+
+/* ================= 支付面板 ================= */
+.pay-panel{margin-top:6px;border:1px solid var(--red);border-radius:4px;background:#fdf4ef;padding:14px 16px}
+.pay-head{font-family:var(--serif);font-weight:900;font-size:14.5px;margin-bottom:8px;color:var(--red-deep)}
+.pay-row{display:flex;align-items:center;gap:10px;font-size:13px;margin:5px 0;flex-wrap:wrap}
+.pay-k{color:var(--dim);width:34px;flex:none;letter-spacing:.1em;font-size:12px}
+.pay-addr code{font-family:var(--mono);font-size:11px;background:var(--field);border:1px solid var(--line2);
+  border-radius:3px;padding:4px 8px;overflow-wrap:anywhere}
+.btn-copy{flex:none;font-size:11px;border:1px solid var(--ink);border-radius:3px;padding:3px 10px;background:var(--card)}
+.btn-copy:hover{background:var(--ink);color:var(--paper)}
+.pay-amt{font-family:var(--mono);font-size:19px;color:var(--red)}
+.pay-warn{font-size:11.5px;color:var(--mut);margin-top:8px;line-height:1.7}
+.pay-status{margin-top:8px;font-size:12.5px;font-family:var(--mono);color:var(--gold)}
+
+/* ================= toast ================= */
+.toast{position:fixed;right:24px;bottom:24px;z-index:99;background:var(--card);border:1px solid var(--ink);
+  border-left:4px solid var(--red);border-radius:4px;padding:12px 18px;font-size:13.5px;color:var(--ink);
+  box-shadow:6px 6px 0 rgba(28,24,19,.15);opacity:0;transform:translateY(14px);transition:all .25s;pointer-events:none;max-width:340px}
+.toast.show{opacity:1;transform:none}
+
+/* ================= responsive / motion ================= */
+@media (max-width:860px){
+  .stat{padding:0 14px}
+  .stat .v{font-size:17px}
+  .mega{grid-template-columns:repeat(2,1fr)}
+}
+@media (max-width:680px){
+  .nav-links .plain{display:none}
+  .card1{grid-template-columns:auto minmax(0,1fr);padding:24px 20px}
+  .bid1{grid-column:1/-1;display:flex;align-items:baseline;gap:14px;text-align:left;border-left:none;padding-left:0;border-top:1px solid var(--line2);padding-top:14px}
+  .bid1 .amt{font-size:26px}
+  .row{grid-template-columns:44px 40px minmax(0,1fr) auto;gap:10px;padding:12px 12px}
+  .info .meta{display:none}
+  .rules-line{display:none}
+}
+@media (prefers-reduced-motion:reduce){
+  *,.ticker-track{animation:none!important;transition:none!important}
+  .row{opacity:1}
+}
+</style>
+</head>
+<body>
+
+<!-- ======== 顶部导航 ======== -->
+<header class="nav">
+  <div class="nav-inner">
+    <a class="logo" href="#" onclick="switchView('all');return false">
+      <span class="seal-mini" aria-hidden="true">榜</span>
+      上榜公报<span class="tld">SHANGBANG.CN</span>
+    </a>
+    <nav class="nav-links">
+      <a href="#" class="nav-link plain" id="nav-all" onclick="switchView('all');return false">总榜</a>
+      <div class="drop" id="catDrop">
+        <button class="nav-link" id="catBtn" aria-expanded="false" aria-haspopup="true">
+          品类
+          <svg class="caret" width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><path d="M1 3l4 4 4-4" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round"/></svg>
+        </button>
+        <div class="mega" id="megaMenu" role="menu"></div>
+      </div>
+      <a href="#rules" class="nav-link plain" onclick="toast('整元出价，¥5 起步；被反超就掉名次，补回差价立刻夺回。');return false">规则</a>
+    </nav>
+    <button class="btn-primary" onclick="openModal()">
+      <svg width="13" height="13" viewBox="0 0 12 12" aria-hidden="true"><path d="M6 1v10M1 6h10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      我要上榜
+    </button>
+  </div>
+</header>
+
+<!-- ======== 电讯条 ======== -->
+<div class="ticker">
+  <span class="ticker-label"><span class="live-dot"></span>电讯</span>
+  <div class="ticker-view"><div class="ticker-track" id="tickerTrack">&nbsp;&nbsp;◆&nbsp;&nbsp;正在接收电讯……</div></div>
+</div>
+
+<main>
+  <!-- ======== 面包屑 ======== -->
+  <div class="crumb" id="crumb" hidden>
+    <a href="#" onclick="switchView('all');return false">总榜</a>
+    <span>/</span><span class="here" id="crumbHere"></span>
+  </div>
+
+  <!-- ======== 页头 ======== -->
+  <section class="board-head">
+    <div>
+      <div class="kicker"><span id="kickerText">全站实时竞拍</span> <span class="sep">·</span> LIVE</div>
+      <h1 id="h1">价高者得。</h1>
+      <p class="sub">排名就是出价，<b>别的不算</b>。想上位？加钱❗</p>
+    </div>
+    <div class="stats">
+      <div class="stat"><div class="v" id="stOnline">—</div><div class="k">人正在围观</div></div>
+      <div class="stat"><div class="v" id="stPool">—</div><div class="k">本榜累计出价</div></div>
+      <div class="stat"><div class="v" id="stRaises">—</div><div class="k">今日加价次数</div></div>
+    </div>
+  </section>
+  <p class="rules-line" id="rules">规则很简单：整元出价，<b>¥5</b> 起步；同一链接再次出价即加价，只需比自己的上一笔高 ¥1；被反超就掉名次，补回差价立刻夺回。<a href="#" onclick="toast('规则：¥5 起步 · 整元出价 · 价高者居上 · 出价即视为接受本规则');return false">完整规则</a></p>
+
+  <!-- ======== 榜一 ======== -->
+  <section id="top1Wrap" aria-label="当前第一">
+    <div class="more-note" style="padding-top:34px">公报印刷中，请稍候……</div>
+  </section>
+
+  <!-- ======== 其余名次 ======== -->
+  <ol class="rows" id="rows"></ol>
+  <p class="more-note" id="moreNote"></p>
+</main>
+
+<footer>
+  <div><span class="brand">上榜公报</span> · 排名即出价，别无其他</div>
+  <div>演示原型，灵感来自 <a href="https://outbid.lol" target="_blank" rel="noopener">outbid.lol</a> · 页面上种子品牌与金额均为虚构 · 出价记录公开可见</div>
+</footer>
+
+<!-- ======== 出价弹窗 ======== -->
+<div class="backdrop" id="modalBack" role="dialog" aria-modal="true" aria-labelledby="mTitle">
+  <div class="sheet">
+    <button class="sheet-x" onclick="closeModal()" aria-label="关闭">×</button>
+    <h3 id="mTitle">出价上榜</h3>
+    <p class="hint-sub">填个链接和出价即刻上墙（演示环境，不接支付）。</p>
+    <div class="field">
+      <label for="fCat">选择榜单</label>
+      <select id="fCat"></select>
+    </div>
+    <div class="field">
+      <label for="fUrl">网站 / 主页链接</label>
+      <input id="fUrl" type="url" placeholder="https://example.com 或 @handle" autocomplete="off">
+    </div>
+    <div class="field">
+      <label for="fname">展示名称</label>
+      <input id="fname" type="text" maxlength="16" placeholder="例如：杂鱼牌猫粮旗舰店" autocomplete="off">
+    </div>
+    <div class="field">
+      <label for="fBid">出价（整元）</label>
+      <div class="bid-field"><span class="yen">¥</span><input id="fBid" type="number" min="5" step="1" placeholder="≥ 5"></div>
+      <div class="bid-hint" id="bidHint"></div>
+      <div class="form-err" id="formErr"></div>
+    </div>
+    <div class="pay-panel" id="payPanel" hidden>
+      <div class="pay-head">① 转账到喵的收款地址（BSC 链）</div>
+      <div class="pay-row"><span class="pay-k">网络</span><span>BSC (BNB Smart Chain)</span></div>
+      <div class="pay-row"><span class="pay-k">代币</span><span>USDT 或 USDC</span></div>
+      <div class="pay-row pay-addr">
+        <span class="pay-k">地址</span>
+        <code id="payAddr"></code>
+        <button class="btn-copy" onclick="copyAddr()">复制</button>
+      </div>
+      <div class="pay-row"><span class="pay-k">金额</span><b class="pay-amt" id="payAmt"></b></div>
+      <p class="pay-warn">⚠️ 必须按上面的<b>精确金额</b>转账（含随机尾数，用于自动匹配订单）。BSC 链 USDT/USDC 均可，交易所提币请选 BSC 网络。30 分钟内有效。</p>
+      <div class="pay-status" id="payStatus">等待转账中……</div>
+    </div>
+    <div class="sheet-actions">
+      <button class="btn-cancel" onclick="closeModal()">先不出</button>
+      <button class="btn-primary" id="btnSubmit" onclick="submitBid()">去支付锁定位子</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toastEl" role="status"></div>
+
+<script>
+/* ============================================================
+   上榜公报 · 前端（接真实后端 /api）
+   ============================================================ */
+'use strict';
+
+const $ = s => document.querySelector(s);
+// 在 github.io 等静态托管上打开时，API 走 ngrok 固定域名；同源部署时留空
+const API_BASE = location.hostname.endsWith('github.io')
+  ? 'https://mayflower-vanquish-botch.ngrok-free.dev' : '';
+const esc = s => String(s ?? '').replace(/[&<>"']/g,
+  c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const fmt = n => '¥' + Number(n).toLocaleString('zh-CN');
+
+let CATS = [];
+let DATA = null;                 // 最近一次 /api/state
+const NGROK_SKIP = {'ngrok-skip-browser-warning': '1'};   // ngrok 免费版拦截页绕过
+const state = { view: 'all', prevRank: new Map(), flash: new Set(), lastTicker: '' };
+
+function hueOf(str){ let h=0; for(const ch of str) h=(h*31+ch.codePointAt(0))%997; return (h*47)%360; }
+function tileHtml(e){
+  const h=hueOf(e.host || e.name || 'x');
+  return `<span class="tile" style="background:hsl(${h} 30% 93%);color:hsl(${h} 45% 30%)">${esc((e.name||'?')[0])}</span>`;
+}
+function catOf(id){ return CATS.find(c=>c.id===id) || {id, name:id}; }
+function deltaHtml(e,newRank){
+  if(!state.prevRank.has(e.id)) return '';
+  const d = state.prevRank.get(e.id) - newRank;
+  if(d===0) return '';
+  return d>0 ? `<span class="delta up">▲${d}</span>` : `<span class="delta down">▼${-d}</span>`;
+}
+
+/* ---------------- 数据拉取 ---------------- */
+async function fetchState(cat, silent){
+  try{
+    const r = await fetch(API_BASE + '/api/state?cat=' + encodeURIComponent(cat||state.view), {cache:'no-store', headers: NGROK_SKIP});
+    if(!r.ok) throw new Error('http '+r.status);
+    const data = await r.json();
+    CATS = data.cats || CATS;
+    DATA = data;
+    render(data);
+    renderTickerFromEvents();
+  }catch(e){
+    if(!silent){ $('#moreNote').textContent = '电讯中断，正在重连……'; }
+  }
+}
+
+/* ---------------- 渲染 ---------------- */
+function render(data){
+  const isAll = data.view==='all';
+  $('#crumb').hidden = isAll;
+  if(!isAll) $('#crumbHere').textContent = catOf(data.view).name;
+  $('#h1').textContent = isAll ? '价高者得。' : `${catOf(data.view).name} · 价高者得`;
+  $('#kickerText').textContent = isAll ? '全站实时竞拍' : `${catOf(data.view).name}榜实时竞拍`;
+  $('#nav-all').classList.toggle('active', isAll);
+  $('#catBtn').classList.toggle('active', !isAll);
+
+  $('#stOnline').textContent = Number(data.stats.online).toLocaleString('zh-CN');
+  $('#stPool').textContent = fmt(data.stats.pool);
+  $('#stRaises').textContent = Number(data.stats.raises).toLocaleString('zh-CN');
+
+  const list = data.list;
+  if(!list.length){ $('#top1Wrap').innerHTML=''; $('#rows').innerHTML='';
+    $('#moreNote').innerHTML='本榜还没有条目，<a href="#" style="color:var(--red)" onclick="openModal();return false">抢个头香</a>'; return; }
+
+  const top = list[0];
+  $('#top1Wrap').innerHTML = `
+  <div class="crown-wrap">
+    <div class="card1">
+      <div class="seal"><span class="zi">魁</span><span class="cap">NO.1</span></div>
+      <div class="info">
+        <div class="name-row">
+          <span class="name">${esc(top.name)}</span>
+          ${top.user?'<span class="chip-held" style="color:var(--red);border-color:var(--red);background:#fbeae5">用户出价</span>':''}
+          <span class="chip-held">在位 ${esc(top.held)}</span>
+        </div>
+        <div class="host">${esc(top.host)}</div>
+        <div class="meta">
+          ${isAll?`<a href="#" onclick="switchView('${top.cat}');return false">${esc(catOf(top.cat).name)}榜</a> · `:''}
+          <span class="cph">${Number(top.cph).toLocaleString('zh-CN')}</span> 次点击/时 · 随时可被超越
+        </div>
+      </div>
+      <div class="bid1">
+        <div><div class="amt">${fmt(top.bid)}</div><div class="lbl">当前出价</div></div>
+        <button class="btn-ghost" onclick="openModal('${top.cat}')">出价超越它</button>
+      </div>
+    </div>
+  </div>`;
+
+  $('#rows').innerHTML = list.slice(1,10).map((e,i)=>{
+    const rk=i+2;
+    return `
+    <li class="row ${state.flash.has(e.id)?'flash':''}" style="animation-delay:${i*35}ms">
+      <div class="rk"><span class="no">${rk}</span>${deltaHtml(e,rk)}</div>
+      ${tileHtml(e)}
+      <div class="info">
+        <div><span class="name">${esc(e.name)}</span>&nbsp;&nbsp;<span class="host">${esc(e.host)}</span>${e.user?'&nbsp;<span class="chip-held" style="color:var(--red);border-color:var(--red)">用户</span>':''}</div>
+        <div class="meta">
+          <a class="cat-chip" href="#" onclick="switchView('${e.cat}');return false">${esc(catOf(e.cat).name)}</a>
+          &nbsp;<span class="cph">${Number(e.cph).toLocaleString('zh-CN')}</span> 次点击/时
+        </div>
+      </div>
+      <div class="bid"><div class="amt">${fmt(e.bid)}</div><div class="lbl">出价</div></div>
+    </li>`;
+  }).join('');
+
+  $('#moreNote').innerHTML =
+    `—— 已展示前 ${Math.min(list.length,10)} 名 · 本榜共 <b>${data.total}</b> 个在榜条目 · 每一笔加价都会实时改写这个页面 ——`;
+
+  state.prevRank = new Map(list.map((e,i)=>[e.id,i+1]));
+  state.flash.clear();
+}
+
+/* ---------------- 电讯条 ---------------- */
+function renderTickerFromEvents(){
+  const msgs = (DATA.events||[]).map(ev => esc(ev.msg));
+  if(!msgs.length) return;
+  const half = msgs.map(m=>`&nbsp;&nbsp;◆&nbsp;&nbsp;${m}`).join('');
+  if(half === state.lastTicker) return;
+  state.lastTicker = half;
+  $('#tickerTrack').innerHTML = half + half;
+}
+
+/* ---------------- 视图切换 ---------------- */
+function switchView(id){
+  state.view = id || 'all';
+  history.replaceState(null,'', state.view==='all' ? '#' : '#'+state.view);
+  closeMega();
+  window.scrollTo({top:0, behavior:'smooth'});
+  fetchState(state.view);
+}
+
+/* ---------------- mega menu ---------------- */
+function buildMega(){
+  const cnt = {};
+  (DATA ? DATA.list : []).forEach(()=>{}); // 计数用全量接口较重，直接显示静态分类
+  $('#megaMenu').innerHTML = groupCats().map(([t,items])=>`
+    <div class="mega-group">
+      <h5>${esc(t)}</h5>
+      ${items.map(cid=>`
+        <button class="mega-item" data-cat="${cid}" onclick="switchView('${cid}')">
+          <span>${esc(catOf(cid).name)}</span>
+        </button>`).join('')}
+    </div>`).join('')
+    + `<div class="mega-foot">${CATS.length} 个分类 · 点击任意分类查看分榜</div>`;
+}
+function groupCats(){
+  const g = { '消费生活':['tea','food','beauty','fit'], '潮流文娱':['toys','game','social'],
+              '科技电商':['ecom','tech'], '出行教育':['travel','edu'] };
+  return Object.entries(g).map(([t,items])=>[t, items.filter(id=>catOf(id))]);
+}
+function openMega(){ $('#catDrop').classList.add('open'); $('#catBtn').setAttribute('aria-expanded','true'); }
+function closeMega(){ $('#catDrop').classList.remove('open'); $('#catBtn').setAttribute('aria-expanded','false'); }
+
+/* ---------------- 弹窗与出价 ---------------- */
+function buildCatSelect(){
+  $('#fCat').innerHTML = CATS.map(c=>`<option value="${c.id}">${esc(c.name)}榜</option>`).join('');
+}
+async function refreshBidHint(){
+  const cid = $('#fCat').value;
+  try{
+    const r = await fetch(API_BASE + '/api/state?cat='+encodeURIComponent(cid), {cache:'no-store', headers: NGROK_SKIP});
+    const d = await r.json();
+    const top = d.list && d.list.length ? d.list[0].bid : 0;
+    $('#bidHint').textContent = top
+      ? `当前「${catOf(cid).name}」登顶价 ${fmt(top)}，出价 ≥ ¥${(top+1).toLocaleString('zh-CN')} 即夺榜首`
+      : `「${catOf(cid).name}」榜还空着，¥5 即登顶`;
+  }catch(_){}
+}
+function openModal(cat){
+  buildCatSelect();
+  if(cat) $('#fCat').value = cat;
+  $('#formErr').textContent = '';
+  $('#payPanel').hidden = true;
+  stopOrderPoll();
+  $('#btnSubmit').textContent = '去支付锁定位子';
+  refreshBidHint();
+  $('#modalBack').classList.add('show');
+  setTimeout(()=>$('#fUrl').focus(),120);
+}
+function closeModal(){
+  if(orderPollTimer && !orderPaidDone) { toast('订单还在等转账，关闭后仍可在 30 分钟内支付到账上榜'); }
+  stopOrderPoll();
+  $('#modalBack').classList.remove('show');
+}
+async function submitBid(){
+  const btn = $('#btnSubmit');
+  // 第二阶段：已显示支付面板时按钮变为「我付好了，立即核验」
+  if(!$('#payPanel').hidden){ checkNow(); return; }
+  const url=$('#fUrl').value.trim(), name=$('#fname').value.trim(), bid=parseInt($('#fBid').value,10);
+  const cat=$('#fCat').value;
+  if(!url) return formErr('链接都不填，你想让杂鱼猜吗？');
+  if(!name) return formErr('给个名字，不然墙上写什么？');
+  if(!bid || bid<5) return formErr('出价至少 ¥5，整数。');
+  btn.disabled = true;
+  $('#formErr').textContent = '';
+  try{
+    const r = await fetch(API_BASE + '/api/bid', {
+      method:'POST', headers:{'Content-Type':'application/json', ...NGROK_SKIP},
+      body: JSON.stringify({url,name,bid,cat}),
+    });
+    const d = await r.json();
+    if(!r.ok || d.err){ formErr(d.err || '出价失败，再试一次'); return; }
+    // 进入支付阶段
+    currentOrderId = d.orderId;
+    orderPaidDone = false;
+    $('#payAddr').textContent = d.payTo;
+    $('#payAmt').textContent = d.amountDue + ' USDT';
+    $('#payPanel').hidden = false;
+    $('#btnSubmit').textContent = '我付好了，立即核验';
+    $('#payStatus').textContent = '等待转账中……（每 15 秒自动查链）';
+    startOrderPoll();
+  }catch(_){
+    formErr('网络打了个喷嚏，再试一次');
+  }finally{
+    btn.disabled = false;
+  }
+  function formErr(m){ $('#formErr').textContent = m; }
+}
+
+/* ---------------- 订单轮询 ---------------- */
+let currentOrderId = null, orderPollTimer = null, orderPaidDone = false;
+function startOrderPoll(){ stopOrderPoll(); orderPollTimer = setInterval(checkOrder, 15000); }
+function stopOrderPoll(){ if(orderPollTimer){ clearInterval(orderPollTimer); orderPollTimer=null; } }
+async function checkNow(){ await checkOrder(true); }
+async function checkOrder(manual){
+  if(!currentOrderId || orderPaidDone) return;
+  try{
+    const r = await fetch(API_BASE + '/api/order?id='+encodeURIComponent(currentOrderId), {headers: NGROK_SKIP});
+    const o = await r.json();
+    if(o.status==='paid' || (o.status==='applied' && o.result)){
+      orderPaidDone = true;
+      stopOrderPoll();
+      $('#payStatus').textContent = o.txHash ? ('✅ 到账确认 tx: '+o.txHash.slice(0,18)+'…') : '✅ 到账确认';
+      setTimeout(()=>{
+        closeModal();
+        if(o.result && !o.result.err){
+          const modeTxt = o.result.mode==='crown' ? '👑 登顶' : o.result.mode==='raise' ? '加价成功' : '上榜成功';
+          toast(`到账上墙！${modeTxt}，现居第 ${o.result.rank} 名喵～`);
+          switchView(($('#fCat').value)||state.view);
+        } else {
+          toast('款已收，但出价生效出了点问题：'+((o.result&&o.result.err)||'稍后联系站长'));
+        }
+      }, 1200);
+    } else if(o.status==='expired'){
+      stopOrderPoll();
+      $('#payStatus').textContent = '⌛ 订单过期了（30 分钟未到账）';
+    } else if(manual){
+      $('#payStatus').textContent = '还没扫到账，链上确认需要一点时间，稍后再点或等自动查询';
+    }
+  }catch(_){}
+}
+function copyAddr(){
+  const t = $('#payAddr').textContent;
+  (navigator.clipboard ? navigator.clipboard.writeText(t) : Promise.reject())
+    .then(()=>toast('地址已复制'))
+    .catch(()=>{ /* 剪贴板被拒时用户可手动选中复制 */ });
+}
+
+/* ---------------- toast ---------------- */
+let toastTimer=null;
+function toast(msg){
+  const el=$('#toastEl'); el.textContent=msg; el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer=setTimeout(()=>el.classList.remove('show'),3600);
+}
+
+/* ---------------- boot ---------------- */
+(async function boot(){
+  $('#catBtn').addEventListener('click', ev=>{
+    ev.stopPropagation();
+    $('#catDrop').classList.contains('open') ? closeMega() : openMega();
+  });
+  document.addEventListener('click', ev=>{ if(!ev.target.closest('#catDrop')) closeMega(); });
+  document.addEventListener('keydown', ev=>{ if(ev.key==='Escape'){ closeModal(); closeMega(); } });
+  $('#modalBack').addEventListener('click', ev=>{ if(ev.target===$('#modalBack')) closeModal(); });
+  $('#fCat').addEventListener('change', refreshBidHint);
+
+  const hash = location.hash.replace('#','');
+  state.view = hash || 'all';
+  await fetchState(state.view);
+  buildMega();
+
+  setInterval(()=>fetchState(state.view, true), 4000);
+})();
+</script>
+</body>
+</html>
