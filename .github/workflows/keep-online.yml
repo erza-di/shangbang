@@ -22,7 +22,7 @@ jobs:
 
       - name: Install ngrok
         run: |
-          curl -sL https://ngrok-agent.s3.amazonaws.com/ngrok-v3-stable-linux-amd64.zip -o ngrok.zip
+          curl -sL https://bin.equinox.io/c/bNyj1mQVY4c/ngrok-v3-stable-linux-amd64.zip -o ngrok.zip
           unzip -o ngrok.zip ngrok
           chmod +x ngrok
           ./ngrok config add-authtoken "$NGROK_AUTHTOKEN"
