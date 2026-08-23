@@ -1,0 +1,41 @@
+name: keep-online
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 */4 * * *'   # 每 4 小时续期一次（上一实例会被并发组取消）
+
+concurrency:
+  group: shangbang-server
+  cancel-in-progress: true
+
+jobs:
+  serve:
+    runs-on: ubuntu-latest
+    timeout-minutes: 230
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install ngrok
+        run: |
+          curl -sL https://ngrok-agent.s3.amazonaws.com/ngrok-v3-stable-linux-amd64.zip -o ngrok.zip
+          unzip -o ngrok.zip ngrok
+          chmod +x ngrok
+          ./ngrok config add-authtoken "$NGROK_AUTHTOKEN"
+        env:
+          NGROK_AUTHTOKEN: ${{ secrets.NGROK_AUTHTOKEN }}
+
+      - name: Start server + tunnel
+        run: |
+          ADMIN_TOKEN="${{ secrets.ADMIN_TOKEN }}" node server.js > server.log 2>&1 &
+          ./ngrok http 8787 --url=mayflower-vanquish-botch.ngrok-free.dev --log stdout > ngrok.log 2>&1 &
+          sleep 20
+          echo "--- local health:"; curl -s http://127.0.0.1:8787/healthz || cat server.log
+          echo "--- public health:"; curl -s https://mayflower-vanquish-botch.ngrok-free.dev/healthz -H "ngrok-skip-browser-warning: 1" | tail -c 300 || (echo "(public not ready yet)"; tail -20 ngrok.log)
+
+      - name: Keep alive
+        run: sleep 13200   # 约 3小时40分 后退出，等下一次调度接管
