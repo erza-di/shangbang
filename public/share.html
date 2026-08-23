@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>分享上榜公报 · 一键转发素材</title>
+<meta name="description" content="把上榜公报分享到你的朋友圈/群/社媒——现成文案一键复制。">
+<style>
+:root{--paper:#f6f2ea;--card:#fbf8f2;--line:#ddd5c5;--ink:#1c1813;--mut:#6e675a;--red:#c23a1e}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:"PingFang SC","Microsoft YaHei",sans-serif;background:var(--paper);color:var(--ink);padding:30px 16px;line-height:1.7}
+main{max-width:720px;margin:0 auto}
+h1{font-family:"Songti SC",SimSun,serif;border-bottom:3px double var(--line);padding-bottom:12px}
+p.sub{color:var(--mut);margin:10px 0 24px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:6px;padding:16px 18px;margin-bottom:14px;position:relative}
+.card h3{font-size:15px;margin-bottom:8px;color:var(--red)}
+.card pre{white-space:pre-wrap;font-family:inherit;font-size:13.5px;color:#33302a}
+.copy{position:absolute;top:12px;right:12px;border:1px solid var(--ink);background:none;padding:4px 12px;border-radius:3px;cursor:pointer;font-size:12px}
+.copy:hover{background:var(--ink);color:#fff}
+.link{word-break:break-all;color:var(--red)}
+</style>
+</head>
+<body>
+<main>
+<h1>分享上榜公报</h1>
+<p class="sub">点「复制」拿走文案，贴到任何地方。排名就是出价，别的不算——让更多人来看商战。</p>
+
+<div class="card"><h3>微信群 / 朋友圈</h3><button class="copy">复制</button><pre>发现一个把「商战」具象化的网站😂 排名就是出价，想上位就加钱！LABUBU 花五万二镇守总榜，随时能被人拉下来。支付直接转U秒上榜，不用注册👉 https://erza-di.github.io/shangbang/</pre></div>
+
+<div class="card"><h3>微博短打</h3><button class="copy">复制</button><pre>全网最诚实的排行榜：没有投票没有算法，纯拼谁钱多钱快。瑞幸 vs 蜜雪的咖啡一哥之争正在直播中⚔️ https://erza-di.github.io/shangbang/ #互联网新鲜事#</pre></div>
+
+<div class="card"><h3>X / Twitter（英文）</h3><button class="copy">复制</button><pre>A leaderboard where rank IS the bid. Pay USDT on BSC → on-chain verification auto-lists you in 30s. Watching Luckin vs Mixue fight for coffee supremacy is free entertainment 🍿 https://erza-di.github.io/shangbang/</pre></div>
+
+<div class="card"><h3>Telegram 群</h3><button class="copy">复制</button><pre>🔥 排名=出价的排行榜，中国品牌版 outbid.lol
+USDT(BSC) 出价 → 链上核验自动上墙 → 被反超加¥1夺回
+看瑞幸和 LABUBU 打架：https://erza-di.github.io/shangbang/</pre></div>
+
+<div class="card"><h3>裸链接（哪里都能贴）</h3><button class="copy">复制</button><pre><span class="link">https://erza-di.github.io/shangbang/</span></pre></div>
+
+<p class="sub" style="margin-top:26px">小技巧：配一张首页截图，转化率翻倍。</p>
+</main>
+<script>
+document.querySelectorAll('.copy').forEach(b=>b.onclick=()=>{
+  navigator.clipboard.writeText(b.parentElement.querySelector('pre').innerText.trim())
+    .then(()=>{b.textContent='已复制✓';setTimeout(()=>b.textContent='复制',1500);});
+});
+</script>
+</body>
+</html>
