@@ -1,0 +1,12 @@
+上榜公报 SHANGBANG — 价高者得的竞价排行榜（outbid.lol 中国版）
+
+排名就是出价，别的不算。想上位？加钱❗
+
+· 出价 ¥5 起步，USDT(BSC) 链上结算，到账自动上墙
+· 被反超？给自己加 ¥1 立刻夺回
+· 电讯条实时播报商战：瑞幸 vs 蜜雪、LABUBU 镇守总榜
+
+→ 玩：https://erza-di.github.io/shangbang/
+→ 仓库：https://github.com/erza-di/shangbang
+
+技术要点：零依赖 Node 后端 / BSC eth_getLogs 支付核验（随机尾数防撞单）/ GitHub Actions 7×24 常驻 / Upstash Redis 跨实例持久 / 全套 $0 成本。

@@ -5,6 +5,8 @@ on:
   schedule:
     - cron: '0 */4 * * *'   # 每 4 小时续期一次（上一实例会被并发组取消）
 
+permissions:
+  contents: write
 concurrency:
   group: shangbang-server
   cancel-in-progress: true

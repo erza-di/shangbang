@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>上榜公报 · 15秒宣传动画</title>
+<style>
+:root{--paper:#f6f2ea;--ink:#1c1813;--red:#c23a1e;--gold:#a07c2c}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#111;font-family:"Songti SC","SimSun",serif;display:flex;align-items:center;justify-content:center;height:100vh;overflow:hidden}
+.stage{width:1280px;height:720px;background:var(--paper);position:relative;box-shadow:0 0 80px #000;display:flex;flex-direction:column;justify-content:center;padding:70px 90px}
+.frame{position:absolute;inset:22px;border:3px solid var(--ink);pointer-events:none}
+.frame2{position:absolute;inset:32px;border:1px solid var(--gold);opacity:.6;pointer-events:none}
+
+/* scene1 印章 */
+.s1{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:5;background:var(--paper)}
+.s1 .big{font-size:110px;font-weight:900;letter-spacing:.12em;opacity:0;animation:fadeUp .9s .2s forwards}
+.seal{width:150px;height:150px;background:var(--red);border-radius:10px;margin-top:34px;display:flex;align-items:center;justify-content:center;
+  transform:scale(3) rotate(-14deg);opacity:0;animation:stamp .55s 1.15s cubic-bezier(.7,0,.84,0) forwards;
+  box-shadow:inset 0 0 0 4px rgba(255,255,255,.55),inset 0 0 0 10px var(--red),inset 0 0 0 13px rgba(255,255,255,.4),0 10px 30px rgba(194,58,30,.35)}
+.seal span{font-size:86px;color:#fff;font-weight:900}
+@keyframes stamp{60%{transform:scale(.92) rotate(-6deg);opacity:1}100%{transform:scale(1) rotate(-6deg);opacity:1}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(26px)}to{opacity:1;transform:none}}
+
+/* scene2 商战 */
+.s2{position:absolute;inset:0;padding:90px 110px;opacity:0;animation:sIn .6s 2.6s forwards;z-index:4;background:var(--paper)}
+@keyframes sIn{to{opacity:1}}
+.s2 h2{font-size:44px;text-align:center;margin-bottom:36px;letter-spacing:.08em}
+.fight{display:flex;align-items:center;justify-content:space-between;max-width:820px;margin:0 auto}
+.cand{text-align:center;width:280px}
+.cand .nm{font-size:26px;font-weight:900}
+.cand .amt{font-family:ui-monospace,monospace;font-size:40px;font-weight:700;color:var(--red);margin-top:8px}
+.cand.l .amt{animation:lup 2.8s 3.4s forwards}
+.cand.r .amt{animation:rup 2.8s 3.4s forwards}
+@keyframes lup{0%{color:#33302a}35%,100%{color:var(--red)}}
+@keyframes rup{0%,20%{transform:none}45%{transform:translateX(-16px) scale(1.06)}100%{transform:none;color:var(--red)}}
+.vs{font-size:56px;font-weight:900;color:var(--ink)}
+.vs small{display:block;font-size:13px;color:#a39a89;letter-spacing:.4em;text-align:center;margin-top:4px}
+.crown{position:absolute;left:50%;top:-46px;transform:translateX(-50%) rotate(18deg);font-size:44px;opacity:0;animation:crownIn .5s 6.2s forwards}
+@keyframes crownIn{to{opacity:1}}
+
+/* scene3 CTA */
+.s3{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;opacity:0;animation:sIn .7s 6.8s forwards;z-index:6;background:var(--paper)}
+.s3 h2{font-size:72px;font-weight:900;letter-spacing:.14em}
+.s3 p{font-size:22px;color:var(--mut);margin:18px 0 34px;letter-spacing:.2em}
+.url{font-family:ui-monospace,monospace;font-size:26px;border:2.5px solid var(--ink);padding:14px 38px;border-radius:6px;background:#fbf8f2}
+.s3 .tag{margin-top:26px;font-size:13px;color:#a39a89;letter-spacing:.5em}
+
+/* ticker 全程 */
+.ticker{position:absolute;bottom:0;left:0;right:0;height:52px;background:var(--red);z-index:8;display:flex;align-items:center;overflow:hidden;opacity:0;animation:sIn .5s 2.8s forwards}
+.tk-label{flex:none;background:#8e2410;color:#fff;height:100%;display:flex;align-items:center;padding:0 22px;font-size:17px;letter-spacing:.3em}
+.tk-track{white-space:nowrap;font-family:ui-monospace,monospace;color:#ffe9d8;font-size:18px;animation:tk 11s linear infinite;padding-left:100%}
+@keyframes tk{to{transform:translateX(-100%)}}
+</style>
+</head>
+<body>
+<div class="stage" id="stage">
+  <div class="frame"></div><div class="frame2"></div>
+
+  <div class="s1">
+    <div class="big">价高者得</div>
+    <div class="seal"><span>榜</span></div>
+  </div>
+
+  <div class="s2">
+    <h2>一场永不落幕的公开竞拍</h2>
+    <div class="fight">
+      <div class="cand l"><div class="nm">瑞幸咖啡</div><div class="amt">¥18,600</div></div>
+      <div class="vs">VS<small>COFFEE WAR</small><div class="crown">👑</div></div>
+      <div class="cand r"><div class="nm">蜜雪冰城</div><div class="amt">¥15,200</div></div>
+    </div>
+  </div>
+
+  <div class="s3">
+    <h2>上榜公报</h2>
+    <p>排名就是出价 · 别的不算 · 想上位？加钱❗</p>
+    <div class="url">erza-di.github.io/shangbang</div>
+    <div class="tag">USDT 出价 · 链上确认 · 自动上墙</div>
+  </div>
+
+  <div class="ticker">
+    <span class="tk-label">电讯</span>
+    <div class="tk-track">&nbsp;&nbsp;◆&nbsp;&nbsp;LABUBU ¥52,800 镇守总榜&nbsp;&nbsp;◆&nbsp;&nbsp;瑞幸 加价¥800 反超蜜雪&nbsp;&nbsp;◆&nbsp;&nbsp;12306 神秘出价震惊全网&nbsp;&nbsp;◆&nbsp;&nbsp;你的对手已经在加钱了&nbsp;&nbsp;</div>
+  </div>
+</div>
+<script>
+// 动画总时长约 8 秒，之后停在 CTA
+</script>
+</body>
+</html>
