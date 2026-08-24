@@ -2,14 +2,16 @@
 
 「排名就是出价，别的不算。想上位？加钱❗」—— 仿 [outbid.lol](https://outbid.lol) 的中国市场竞价排行榜，公报风设计（米白纸底 / 墨色宋体 / 朱红印章）。
 
-**→ 网站入口：https://erza-di.github.io/shangbang/ （本仓库 Pages 即网站本体，见 `public/` 目录）**
+**→ 网站入口：https://erza-di.github.io/shangbang/ （本仓库 Pages 即网站本体，见 `docs/` 目录）**
 
 ## 公网地址（双入口）
 
 | 入口 | 地址 | 说明 |
 |---|---|---|
-| **GitHub Pages** | https://erza-di.github.io/shangbang/ | 页面永久在线；API 自动走 ngrok 域名 |
-| **ngrok 直连** | https://mayflower-vanquish-botch.ngrok-free.dev | 页面+API 同源，由 GitHub Actions 7×24 常驻 |
+| **ngrok 直连**（完整功能） | https://mayflower-vanquish-botch.ngrok-free.dev | 页面+API 同源，本机在线即可出价 |
+| **GitHub Pages**（镜像） | https://erza-di.github.io/shangbang/ | 页面永久在线；API 转发到 ngrok 域名 |
+
+> ⚠️ 出价/上榜功能需要后端在线。Pages 只是静态镜像，后端离线时请走 ngrok 直连或等站长开机。
 
 ### 7×24 常驻机制（GitHub Actions）
 
